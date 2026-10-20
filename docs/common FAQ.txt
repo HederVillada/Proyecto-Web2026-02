@@ -1,0 +1,21 @@
+What is docker? It is a tiny virtual machine that runs an image we put on it, like Oracle
+
+Why does the project need docker? Because docker makes it much more convenient to grab the Oracle image than installing it ourselves
+
+What is oracle, in this project? It is a tool that reads sql instructions, reads the recipe of the cake, makes the cake, and sends the cake back to oracledb
+
+
+What is the DSN? localhost: FourNumbers / StringOfWordsDecidedByOperator. Like localhost:1521/XEPDB1.
+
+What is oracledb? it is a library (basically an app) that Python uses. What does it do? 
+It takes random raw binary data from Oracle (the 'cake' from reading the instructions) and translate it into stuff usable by Python. 
+What does it not do? understand SQL files directly. It organizes the cake into a way anyone can understand it, it doesn't understand the recipe at all.
+
+
+When python runs cursor.execute("SELECT * FROM EQUIPMENT"), what are the three steps that happen between that line and the rows appearing? 
+First, Python tells this to OracleDB, OracleDB sends this to Oracle, Oracle scours the tables, then gives it back to OracleDB, 
+which gives it back to Python, and Python then prints out
+
+
+What are .SQL files? they are instruction files that hold instructions. What was their job? hold those instructions for Oracle to use. 
+Is that job done? yes, unless you wanted to change the schema.

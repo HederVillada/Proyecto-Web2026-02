@@ -1,0 +1,20 @@
+# How to rebuild this from scratch (my own notes)
+
+1. Install WSL2: `wsl --install` in admin PowerShell, then reboot
+2. Install Docker Desktop from docker.com, accept defaults
+3. If docker commands error with "cannot connect to daemon" → open Docker Desktop, wait for tray icon to steady
+4. If docker errors with 500 on _ping → `wsl --shutdown` in admin PowerShell, reopen Docker Desktop, wait
+5. `docker run -d --name oracle-xe -p 1521:1521 -e ORACLE_PASSWORD=Oracle123 gvenzl/oracle-xe:latest`
+6. `docker logs -f oracle-xe` → wait for "DATABASE IS READY TO USE!" → Ctrl+C
+7. `pip install oracledb`
+8. Run test_oracle.py → should print (1,) SUCCESS
+
+## Daily restart
+- `docker start oracle-xe`
+- wait 60s
+- run python test_oracle.py
+
+## The three things in a connection
+- user (who)
+- password (proof)
+- dsn = host:port/service (where)

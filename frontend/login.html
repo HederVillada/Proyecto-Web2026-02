@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>  <!--Los comentarios para HTML si son extranos-->
+    <meta charset="UTF-8"> <!--usamos el character set UTF-8, que soporta caracteres no extraños-->
+    <title>Login - Tech Lab System</title> <!--Este es el titulo. Se utiliza <esto>EL TITULO</title> formato-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> <!--de aqui saque el stylesheet-->
+    <!--Esto le indica a mi pagina que descargue e incluya la versión 5.3.0 de Bootstrap directamente desde internet (por CDN)-->
+    <!--Esto va a ser importante DESPUES cuand ovemos las clases y todo -->
+</head>
+<body class="bg-dark d-flex align-items-center justify-content-center vh-100"> <!--a ver explico: 
+    bg-dark: el fondo es negro
+    d-flex: Activa el modelo de diseño flexible de CSS para ordenar los elementos hijos
+    align-elements-center: Centra verticalmente el contenido dentro de la pantalla (a opuesto de que todo este desordenado arriba y feo)
+    justify-content-center: Centra horizontalmente el contenido dentro de la pantalla (a opuesto de que todo este a la izquierda y feo)
+    vh-100 Hace que el cuerpo de la pagina ocupe exactamente el 100% de la altura visible de la pantalla o dispositivo (100%, como vh-100)-->
+    <div class="card shadow p-4" style="width: 400px;">
+        <!-- a ver: 
+         card convierte el div en un rectangulo con bordes redondeados
+         shadow añade sombras para dar un resaltado
+         p-4 esto es de padding, padding va de 0-5, 4 es un padding generoso, que añade espacio de relleno 
+         interno alrededor de todo el contenido de la tarjeta-->
+        <h3 class="text-center mb-4">Lab Login</h3>
+        <form id="loginForm"> <!--Este es Form, Form tiene 2 inputs-->
+            <div class="mb-3">
+                <!-- mb-3 significa margin bottom 3, añade un margen exterior en la parte inferior de ese bloque. que es 3? 3 rem, osea 3*16 pixeles
+                 tu haz el calculo, yo no lo quiero hacer. Me imagino que es 16 + 16 = 28 + 16.... Ay no se.-->
+                <label class="form-label">Correo electrónico</label> <!--Aqui en VS Code me dice que la ó y la ñ no son de ascii normal
+                lo bueno es que como usamos UTF-8, no nos tenemos que preocupar de eso--> 
+                <!--Form tiene dos tipos de input: El correo electronico-->
+                <input type="email" id="email" class="form-control" value="admin@lab.edu" required>
+                <!--form-control es una capa de bootstrap,  transforma inputs de HTML a campos de textos con bordes limpios, esquinas 
+                redondeadas, tipografia agradable, y un focus (efecto visual) cuando se clicea para escribir-->
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                 <!--Y la contraseña. Las dos son separadas (su propio div) con sus clases mb-3. margin-bottom son 16 pixeles (1 rem)-->
+                <input type="password" id="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+            <!--btn convierte el botón plano de HTML en un botón interactivo estilizado con sus bordes redondiados y todo eso
+            btn primary le da el color principal por defecto a mi aplicación 
+            w-100 es width 100-->
+        </form>
+        <div id="errorMsg" class="text-danger mt-3 text-center"></div>
+    </div>
+    <script>
+        // Al parecer tambien puedo utilizar los mismos comentarios de Java!
+        // Tambien funcioinan por solo UNA linea
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); //para el navegador de recargar la pagina
+            const res = await fetch('http://localhost:8000/api/auth/login', { //call our FastAPI login endpoint
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            if (res.ok) { //status 200 → login correct
+                const data = await res.json(); //parse the JSON response: {user_id, full_name, role}
+                localStorage.setItem('user', JSON.stringify(data)); //save it in the browser
+                window.location.href = 'dashboard.html'; //go to the dashboard
+            } else { //status 401 → wrong credentials
+                document.getElementById('errorMsg').innerText = "Credenciales incorrectas";
+            }
+        });
+    </script>
+</body>
+</html>

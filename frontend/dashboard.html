@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Tech Lab System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN for clean UI -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark px-4">
+        <span class="navbar-brand"><i class="bi bi-tools me-2"></i>University Tech Lab - Panel Principal</span>
+        <span id="userInfo" class="text-white"></span>
+    </nav>
+    <div class="container my-4">
+
+        <div class="row text-center mb-4">
+            <div class="col-md-4">
+                <div class="card shadow border-0 p-3 bg-primary text-white">
+                    <h5>Total Equipos</h5>
+                    <h3 id="kpiTotal">0</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow border-0 p-3 bg-success text-white">
+                    <h5>Disponibles</h5>
+                    <h3 id="kpiAvailable">0</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow border-0 p-3 bg-secondary text-white">
+                    <h5>Usuarios Registrados</h5>
+                    <h3 id="kpiUsers">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Registrar Equipo: Oculto para usuarios normales -->
+            <div class="col-md-4" id="registerColumn" style="display: none;">
+                <div class="card shadow border-0 p-4">
+                    <h4 class="mb-3 text-secondary">Registrar Equipo</h4>
+                    <form id="equipmentForm">
+                        <div class="mb-3">
+                            <label class="form-label">Número de Serial</label>
+                            <input type="text" id="serial_no" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del Equipo</label>
+                            <input type="text" id="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID Categoría (1: 3D, 2: VR)</label>
+                            <input type="number" id="category_id" class="form-control" value="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100">Guardar en Base de Datos</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla de Inventario: Cambia su ancho según el rol -->
+            <div id="inventoryColumn" class="col-md-12">
+                <div class="card shadow border-0 p-4">
+                    <h4 class="mb-3 text-secondary">Inventario Actual</h4>
+                    <table class="table table-hover" style="width: 100%;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 8%;">ID</th>
+                                <th style="width: 20%;">Serial</th>
+                                <th style="width: 30%;">Nombre</th>
+                                <th style="width: 12%;">Estado</th>
+                                <th id="actionsHeader" style="width: 30%;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipmentTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) { 
+            window.location.href = 'login.html'; 
+        } else { 
+            document.getElementById('userInfo').innerHTML = `<i class="bi bi-person-circle me-1"></i>${user.full_name} (${user.role})`; 
+        }
+
+       // Hacemos el check en minúsculas para que no importe si viene como 'Admin', 'ADMIN' o 'admin'
+       const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
+       const userRole = user && user.role ? user.role.toLowerCase() : 'student';
+
+        // Manejar visibilidad según rol en el frontend
+        if (isAdmin) {
+            document.getElementById('registerColumn').style.display = 'block';
+            document.getElementById('inventoryColumn').className = 'col-md-8';
+        } else {
+            document.getElementById('registerColumn').style.display = 'none';
+            document.getElementById('inventoryColumn').className = 'col-md-12';
+            // Opcional: si quieres ocultar por completo la columna de acciones para usuarios:
+            // document.getElementById('actionsHeader').style.display = 'none';
+        }
+
+        async function loadMetrics() {
+            const res = await fetch('http://localhost:8000/api/dashboard/metrics');
+            const data = await res.json();
+            document.getElementById('kpiTotal').innerText = data.total_equipment;
+            document.getElementById('kpiAvailable').innerText = data.available_equipment;
+            document.getElementById('kpiUsers').innerText = data.total_users;
+        }
+
+        async function loadEquipment() {
+            const res = await fetch('http://localhost:8000/api/equipment');
+            const items = await res.json();
+            const tbody = document.getElementById('equipmentTableBody');
+            tbody.innerHTML = '';
+            
+            items.forEach(eq => {
+                const badgeColor = eq.status === 'AVAILABLE' ? 'bg-success' : (eq.status === 'LOANED' ? 'bg-warning' : 'bg-danger');
+                
+                // Construir botones de acción condicionales
+                let actionsHtml = '';
+                if (isAdmin) {
+                    actionsHtml = `
+                        <button class="btn btn-sm btn-warning" onclick="toggleStatus(${eq.id})">Cambiar Estado</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${eq.id})">Eliminar</button>
+                    `;
+                } else {
+                    actionsHtml = `<span class="text-muted fst-italic">Solo lectura</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${eq.id}</td>
+                        <td>${eq.serial_no}</td>
+                        <td>${eq.name}</td>
+                        <td><span class="badge ${badgeColor}">${eq.status}</span></td>
+                        <td>${actionsHtml}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function toggleStatus(id) {
+            if (!isAdmin) return;
+            const res = await fetch(`http://localhost:8000/api/equipment/${id}`);
+            const eq = await res.json();
+            const newStatus = eq.status === 'AVAILABLE' ? 'LOANED' : 'AVAILABLE';
+            const putRes = await fetch(`http://localhost:8000/api/equipment/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-User-Role': userRole // Enviamos el rol actual para que el backend lo autorice
+                },
+                body: JSON.stringify({
+                    serial_no: eq.serial_no,
+                    name: eq.name,
+                    category_id: eq.category_id,
+                    status: newStatus
+                })
+            });
+            if (putRes.ok) {
+                loadEquipment();
+                loadMetrics();
+            } else {
+                alert('Error al cambiar estado');
+            }
+        }
+
+        async function deleteEquipment(id) {
+            if (!isAdmin) return;
+            if (!confirm('¿Eliminar este equipo?')) return;
+            const res = await fetch(`http://localhost:8000/api/equipment/${id}`, { 
+                method: 'DELETE',
+                headers: {
+                    'X-User-Role': userRole // Enviamos el rol para aprobar el borrado
+                }
+            });
+            if (res.ok) {
+                loadEquipment();
+                loadMetrics();
+            } else {
+                alert('Error al eliminar');
+            }
+        }
+
+        const equipmentForm = document.getElementById('equipmentForm');
+        if (equipmentForm) {
+            equipmentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isAdmin) return;
+                const res = await fetch('http://localhost:8000/api/equipment', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-User-Role': userRole // Enviamos el rol para autorizar la inserción
+                    },
+                    body: JSON.stringify({
+                        serial_no: document.getElementById('serial_no').value,
+                        name: document.getElementById('name').value,
+                        category_id: parseInt(document.getElementById('category_id').value)
+                    })
+                });
+                if (res.ok) {
+                    document.getElementById('equipmentForm').reset();
+                    loadEquipment();
+                    loadMetrics();
+                } else {
+                    alert('Error al registrar equipo');
+                }
+            });
+        }
+
+        loadMetrics();
+        loadEquipment();
+    </script>
+</body>
+</html>
