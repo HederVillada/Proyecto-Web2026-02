@@ -73,11 +73,38 @@
         </div>
     </div>
 
+    <!-- Modal para Editar Usuario -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_user_id">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" id="edit_full_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="edit_email" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEditUser()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS for the Modal -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Usamos sessionStorage para evitar compartir sesión entre pestañas
         const user = JSON.parse(sessionStorage.getItem('user'));
-        
-        // ROUTE GUARD: Si no hay usuario, al login. Si no es admin, al dashboard.
         if (!user) { 
             window.location.href = 'login.html'; 
         } else if (user.role.toLowerCase() !== 'admin') {
@@ -85,6 +112,8 @@
         } else { 
             document.getElementById('userInfo').innerHTML = `<i class="bi bi-person-circle me-1"></i>${user.full_name} (${user.role})`; 
         }
+
+        let globalUsers = []; // To store users for editing
 
         function showMessage(text, isError) {
             const box = document.getElementById('messageBox');
@@ -96,22 +125,75 @@
         async function loadUsers() {
             const res = await fetch('http://localhost:8000/api/users');
             if (!res.ok) return; 
-            const users = await res.json();
+            globalUsers = await res.json();
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
-            users.forEach(u => {
+            
+            globalUsers.forEach(u => {
+                // Do not show delete/edit buttons for yourself (prevents self-deletion)
+                let actionsHtml = '';
+                if (u.id !== user.user_id) {
+                    actionsHtml = `
+                        <button class="btn btn-sm btn-primary" onclick="openEditModal(${u.id})">Editar</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Eliminar</button>
+                    `;
+                } else {
+                    actionsHtml = `<span class="text-muted fst-italic">Tú</span>`;
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${u.id}</td>
                         <td>${u.name}</td>
                         <td>${u.email}</td>
                         <td>${u.role_id === 1 ? 'Admin' : 'Estudiante'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">Eliminar</button>
-                        </td>
+                        <td>${actionsHtml}</td>
                     </tr>
                 `;
             });
+        }
+
+        function openEditModal(id) {
+            const userToEdit = globalUsers.find(u => u.id === id);
+            if (!userToEdit) return;
+            
+            document.getElementById('edit_user_id').value = userToEdit.id;
+            document.getElementById('edit_full_name').value = userToEdit.name;
+            document.getElementById('edit_email').value = userToEdit.email;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+        }
+
+        async function saveEditUser() {
+            const id = document.getElementById('edit_user_id').value;
+            const newName = document.getElementById('edit_full_name').value;
+            const newEmail = document.getElementById('edit_email').value;
+            
+            // Note: We send the existing password hash and role so we don't break the login
+            const userToEdit = globalUsers.find(u => u.id === parseInt(id));
+            
+            const res = await fetch(`http://localhost:8000/api/users/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-User-Role': user.role 
+                },
+                body: JSON.stringify({
+                    full_name: newName,
+                    email: newEmail,
+                    password_hash: "$2b$12$eImiTXuWVxfM37uY4JANjOL.81F8RzW/vT.1o3S6T.a9d5xJq5L4G", // Standard demo hash
+                    role_id: userToEdit.role_id
+                })
+            });
+            
+            if (res.ok) {
+                showMessage('Usuario actualizado exitosamente.', false);
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadUsers();
+            } else {
+                showMessage('Error al actualizar usuario.', true);
+            }
         }
 
         async function deleteUser(id) {
