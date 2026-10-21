@@ -5,124 +5,29 @@
     <title>Login - Tech Lab System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #1e1e1e; 
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .login-wrapper {
-            position: relative;
-            width: 90%;
-            max-width: 550px;
-            margin-top: 40px; 
-        }
-
-        /* The Tab Buttons (Estudiante / Admin) */
-        .tabs {
-            position: absolute;
-            top: -40px;
-            left: 50px;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .tab-btn {
-            padding: 8px 30px;
-            border: none;
-            border-radius: 10px 10px 0 0;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            text-transform: uppercase;
-            color: #333;
-            background-color: #a4b6c4; 
-        }
-
-        .tab-btn.active {
-            background-color: #d6e8f5; 
-            color: #000;
-            padding-top: 12px; 
-            z-index: 2;
-        }
-
-        /* The main light blue card */
-        .login-card {
-            background-color: #d6e8f5;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-title {
-            text-align: center;
-            font-weight: 800;
-            margin-bottom: 30px;
-            font-size: 22px;
-        }
-
-        .section-title {
-            font-weight: 800;
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-
-        .form-control {
-            border-radius: 20px;
-            border: 3px solid #ccc;
-            padding: 10px 15px;
-            font-weight: bold;
-        }
-        
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #6c8ebf;
-        }
-
-        /* The big gray submit button */
-        .door-btn {
-            background-color: #e0e0e0;
-            border: 4px solid #b0b0b0;
-            border-radius: 15px;
-            padding: 15px 10px;
-            font-weight: 800;
-            color: #000;
-            text-transform: uppercase;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 4px 0 #888;
-            margin-top: 20px;
-        }
-
-        .door-btn:hover {
-            background-color: #f0f0f0;
-            transform: translateY(-2px);
-        }
-        
-        .door-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #888;
-        }
+        body { background-color: #1e1e1e; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .login-wrapper { position: relative; width: 90%; max-width: 550px; margin-top: 40px; }
+        .tabs { position: absolute; top: -40px; left: 50px; display: flex; gap: 10px; }
+        .tab-btn { padding: 8px 30px; border: none; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; color: #333; background-color: #a4b6c4; }
+        .tab-btn.active { background-color: #d6e8f5; color: #000; padding-top: 12px; z-index: 2; }
+        .login-card { background-color: #d6e8f5; border-radius: 20px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; z-index: 1; }
+        .login-title { text-align: center; font-weight: 800; margin-bottom: 30px; font-size: 22px; }
+        .section-title { font-weight: 800; font-size: 20px; margin-bottom: 15px; }
+        .form-control { border-radius: 20px; border: 3px solid #ccc; padding: 10px 15px; font-weight: bold; }
+        .form-control:focus { box-shadow: none; border-color: #6c8ebf; }
+        .door-btn { background-color: #e0e0e0; border: 4px solid #b0b0b0; border-radius: 15px; padding: 15px 10px; font-weight: 800; color: #000; text-transform: uppercase; font-size: 16px; cursor: pointer; transition: all 0.2s; width: 100%; text-align: center; box-shadow: 0 4px 0 #888; margin-top: 20px; }
+        .door-btn:hover { background-color: #f0f0f0; transform: translateY(-2px); }
+        .door-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #888; }
     </style>
 </head>
 <body>
 
     <div class="login-wrapper">
-        <!-- The Tabs -->
         <div class="tabs">
             <button class="tab-btn active" id="tab-estudiante" onclick="switchTab('estudiante')">Estudiante</button>
             <button class="tab-btn" id="tab-admin" onclick="switchTab('admin')">Admin</button>
         </div>
 
-        <!-- The Main Box -->
         <div class="login-card">
             <div class="login-title">LABORATORIO DE LA UNIVERSIDAD</div>
 
@@ -139,7 +44,6 @@
                     <input type="password" id="password" class="form-control" required>
                 </div>
 
-                <!-- The single entrance button -->
                 <button type="submit" class="door-btn">INGRESAR</button>
 
                 <div id="errorMsg" class="text-danger mt-3 text-center fw-bold"></div>
@@ -150,17 +54,12 @@
     <script>
         let currentTab = 'estudiante';
 
-        // Switch between Estudiante and Admin tabs
         function switchTab(role) {
             currentTab = role;
             document.getElementById('tab-estudiante').classList.remove('active');
             document.getElementById('tab-admin').classList.remove('active');
-            
-            if (role === 'admin') {
-                document.getElementById('tab-admin').classList.add('active');
-            } else {
-                document.getElementById('tab-estudiante').classList.add('active');
-            }
+            if (role === 'admin') { document.getElementById('tab-admin').classList.add('active'); } 
+            else { document.getElementById('tab-estudiante').classList.add('active'); }
         }
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -169,39 +68,44 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
+            
+            errorMsg.innerText = "Conectando con el servidor...";
+            errorMsg.className = "text-primary mt-3 text-center fw-bold";
 
-            const res = await fetch('http://localhost:8000/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, password: password })
-            });
+            try {
+                // FETCH IS HARDCODED TO 8080 NOW
+                const res = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
 
-            if (res.ok) {
-                const data = await res.json();
-                
-                // SECURITY CHECK: Ensure the user's role matches the tab they are on
-                const isActuallyAdmin = data.role.toLowerCase() === 'admin';
-                if (currentTab === 'admin' && !isActuallyAdmin) {
-                    errorMsg.innerText = "Esta cuenta no tiene privilegios de Admin.";
-                    return;
-                }
-                if (currentTab === 'estudiante' && isActuallyAdmin) {
-                    errorMsg.innerText = "Usa la pestaña de Admin para esta cuenta.";
-                    return;
-                }
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const isActuallyAdmin = data.role.toLowerCase() === 'admin';
+                    if (currentTab === 'admin' && !isActuallyAdmin) {
+                        errorMsg.innerText = "Esta cuenta no tiene privilegios de Admin.";
+                        errorMsg.className = "text-danger mt-3 text-center fw-bold";
+                        return;
+                    }
+                    if (currentTab === 'estudiante' && isActuallyAdmin) {
+                        errorMsg.innerText = "Usa la pestaña de Admin para esta cuenta.";
+                        errorMsg.className = "text-danger mt-3 text-center fw-bold";
+                        return;
+                    }
 
-                // Save session in sessionStorage (per-tab security)
-                sessionStorage.setItem('user', JSON.stringify(data));
-                
-                // REDIRECT LOGIC
-                if (isActuallyAdmin) {
-                    window.location.href = 'dashboard.html'; // Admins go to inventory
+                    sessionStorage.setItem('user', JSON.stringify(data));
+                    if (isActuallyAdmin) { window.location.href = 'dashboard.html'; } 
+                    else { window.location.href = 'loans.html'; }
+                    
                 } else {
-                    window.location.href = 'loans.html';     // Students go to loans
+                    errorMsg.innerText = "Credenciales incorrectas";
+                    errorMsg.className = "text-danger mt-3 text-center fw-bold";
                 }
-                
-            } else {
-                errorMsg.innerText = "Credenciales incorrectas";
+            } catch (error) {
+                errorMsg.innerText = "Error de red: El backend no está respondiendo.";
+                errorMsg.className = "text-danger mt-3 text-center fw-bold";
             }
         });
     </script>

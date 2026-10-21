@@ -87,7 +87,7 @@
         }
 
         async function loadUsersDropdown() {
-            const res = await fetch('http://192.168.20.24:8000/api/users');
+            const res = await fetch('http://localhost:8080/api/users');
             const users = await res.json();
             const select = document.getElementById('user_id');
             select.innerHTML = '<option value="">Selecciona un usuario...</option>';
@@ -100,7 +100,7 @@
         }
 
         async function loadReport() {
-            const res = await fetch('http://192.168.20.24:8000/api/reservations/report');
+            const res = await fetch('http://localhost:8080/api/reservations/report');
             const report = await res.json();
             const tbody = document.getElementById('reportTableBody');
             tbody.innerHTML = '';
@@ -118,7 +118,7 @@
 
         document.getElementById('loanForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const res = await fetch('http://192.168.20.24:8000/api/reservations', {
+            const res = await fetch('http://localhost:8080/api/reservations', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

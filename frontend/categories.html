@@ -55,7 +55,7 @@
         }
 
         async function loadCategories() {
-            const res = await fetch('http://192.168.20.24:8000/api/categories');
+            const res = await fetch('http://localhost1:8080/api/categories');
             const cats = await res.json();
             const tbody = document.getElementById('categoriesTableBody');
             tbody.innerHTML = '';

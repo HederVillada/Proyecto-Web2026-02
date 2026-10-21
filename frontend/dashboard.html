@@ -139,7 +139,7 @@
         }
 
         async function loadMetrics() {
-            const res = await fetch('http://192.168.20.24:8000/api/dashboard/metrics');
+            const res = await fetch('http://localhost:8080/api/dashboard/metrics');
             const data = await res.json();
             document.getElementById('kpiTotal').innerText = data.total_equipment;
             document.getElementById('kpiAvailable').innerText = data.available_equipment;
@@ -147,7 +147,7 @@
         }
 
         async function loadCategories() {
-            const res = await fetch('http://192.168.20.24:8000/api/categories');
+            const res = await fetch('http://localhost:8080/api/categories');
             const cats = await res.json();
             const select = document.getElementById('category_id');
             select.innerHTML = ''; 
@@ -157,10 +157,10 @@
         }
 
         async function loadEquipment() {
-            const res = await fetch('http://192.168.20.24:8000/api/equipment');
+            const res = await fetch('http://localhost:8080/api/equipment');
             const items = await res.json();
             
-            const catRes = await fetch('http://192.168.20.24:8000/api/categories');
+            const catRes = await fetch('http://localhost:8080/api/categories');
             const catList = await catRes.json();
 
             const tbody = document.getElementById('equipmentTableBody');
@@ -206,10 +206,10 @@
 
         async function toggleStatus(id) {
             if (!isAdmin) return;
-            const res = await fetch(`http://192.168.20.24:8000/api/equipment/${id}`);
+            const res = await fetch(`http://localhost:8080/api/equipment/${id}`);
             const eq = await res.json();
             const newStatus = eq.status === 'AVAILABLE' ? 'LOANED' : 'AVAILABLE';
-            const putRes = await fetch(`http://192.168.20.24:8000/api/equipment/${id}`, {
+            const putRes = await fetch(`http://localhost:8080/api/equipment/${id}`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -235,7 +235,7 @@
             if (!isAdmin) return;
             if (!confirm('¿El estudiante ha devuelto este equipo?')) return;
             
-            const res = await fetch(`http://192.168.20.24:8000/api/reservations/return/${id}`, {
+            const res = await fetch(`http://localhost:8080/api/reservations/return/${id}`, {
                 method: 'PUT',
                 headers: { 'X-User-Role': userRole }
             });
@@ -252,7 +252,7 @@
         async function deleteEquipment(id) {
             if (!isAdmin) return;
             if (!confirm('¿Eliminar este equipo?')) return;
-            const res = await fetch(`http://192.168.20.24:8000/api/equipment/${id}`, { 
+            const res = await fetch(`http://localhost:8080/api/equipment/${id}`, { 
                 method: 'DELETE',
                 headers: {
                     'X-User-Role': userRole 
@@ -272,7 +272,7 @@
             equipmentForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdmin) return;
-                const res = await fetch('http://192.168.20.24:8000/api/equipment', {
+                const res = await fetch('http://localhost:8080/api/equipment', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

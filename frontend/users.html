@@ -127,7 +127,7 @@
         }
 
         async function loadUsers() {
-            const res = await fetch('http://192.168.20.24:8000/api/users');
+            const res = await fetch('http://localhost:8080/api/users');
             if (!res.ok) return; 
             globalUsers = await res.json();
             const tbody = document.getElementById('usersTableBody');
@@ -175,7 +175,7 @@
             
             const userToEdit = globalUsers.find(u => u.id === parseInt(id));
             
-            const res = await fetch(`http://192.168.20.24:8000/api/users/${id}`, {
+            const res = await fetch(`http://localhost:8080/api/users/${id}`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -200,7 +200,7 @@
 
         async function deleteUser(id) {
             if (!confirm('¿Estás seguro de eliminar a este usuario?')) return;
-            const res = await fetch(`http://192.168.20.24:8000/api/users/${id}`, {
+            const res = await fetch(`http://localhost:8080/api/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-User-Role': user.role }
             });
@@ -214,7 +214,7 @@
 
         document.getElementById('userForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const res = await fetch('http://192.168.20.24:8000/api/users', {
+            const res = await fetch('http://localhost:8080/api/users', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
