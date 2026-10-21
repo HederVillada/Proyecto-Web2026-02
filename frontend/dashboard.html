@@ -3,17 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - Tech Lab System</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CDN for clean UI -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark px-4">
-        <span class="navbar-brand"><i class="bi bi-tools me-2"></i>University Tech Lab - Panel Principal</span>
-        <span id="userInfo" class="text-white"></span>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 mb-4">
+        <a class="navbar-brand" href="dashboard.html"><i class="bi bi-tools me-2"></i>Tech Lab</a>
+        <div class="navbar-nav">
+            <a class="nav-link active" href="dashboard.html"><i class="bi bi-box-seam me-1"></i> Inventario</a>
+            <a class="nav-link" href="categories.html"><i class="bi bi-tags me-1"></i> Categorías</a>
+            <a class="nav-link" href="users.html"><i class="bi bi-people me-1"></i> Usuarios</a>
+            <a class="nav-link" href="loans.html"><i class="bi bi-arrow-left-right me-1"></i> Préstamos</a>
+        </div>
+        <span id="userInfo" class="text-white ms-auto"></span>
     </nav>
     <div class="container my-4">
+
+        <div id="messageBox" class="alert d-none" role="alert"></div>
 
         <div class="row text-center mb-4">
             <div class="col-md-4">
@@ -37,7 +43,6 @@
         </div>
 
         <div class="row">
-            <!-- Registrar Equipo: Oculto para usuarios normales -->
             <div class="col-md-4" id="registerColumn" style="display: none;">
                 <div class="card shadow border-0 p-4">
                     <h4 class="mb-3 text-secondary">Registrar Equipo</h4>
@@ -51,26 +56,32 @@
                             <input type="text" id="name" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">ID Categoría (1: 3D, 2: VR)</label>
-                            <input type="number" id="category_id" class="form-control" value="1" required>
+                            <label class="form-label">Categoría</label>
+                            <select id="category_id" class="form-select" required>
+                                <option value="">Cargando categorías...</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-dark w-100">Guardar en Base de Datos</button>
                     </form>
                 </div>
             </div>
 
-            <!-- Tabla de Inventario: Cambia su ancho según el rol -->
             <div id="inventoryColumn" class="col-md-12">
                 <div class="card shadow border-0 p-4">
-                    <h4 class="mb-3 text-secondary">Inventario Actual</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-secondary mb-0">Inventario Actual</h4>
+                        <input type="text" id="searchInput" class="form-control" style="max-width: 300px;" placeholder="Buscar por serial o nombre..." onkeyup="filterTable()">
+                    </div>
                     <table class="table table-hover" style="width: 100%;">
                         <thead class="table-dark">
                             <tr>
-                                <th style="width: 8%;">ID</th>
-                                <th style="width: 20%;">Serial</th>
-                                <th style="width: 30%;">Nombre</th>
-                                <th style="width: 12%;">Estado</th>
-                                <th id="actionsHeader" style="width: 30%;">Acciones</th>
+                                <th style="width: 5%;">ID</th>
+                                <th style="width: 15%;">Serial</th>
+                                <th style="width: 15%;">Categoría</th>
+                                <th style="width: 25%;">Nombre</th>
+                                <th style="width: 10%;">Estado</th>
+                                <th style="width: 15%;">Prestado a</th>
+                                <th id="actionsHeader" style="width: 15%;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="equipmentTableBody"></tbody>
@@ -81,26 +92,38 @@
     </div>
 
     <script>
-        const user = JSON.parse(localStorage.getItem('user'));
+        const user = JSON.parse(sessionStorage.getItem('user'));
         if (!user) { 
             window.location.href = 'login.html'; 
         } else { 
             document.getElementById('userInfo').innerHTML = `<i class="bi bi-person-circle me-1"></i>${user.full_name} (${user.role})`; 
         }
 
-       // Hacemos el check en minúsculas para que no importe si viene como 'Admin', 'ADMIN' o 'admin'
        const isAdmin = user && user.role && user.role.toLowerCase() === 'admin';
-       const userRole = user && user.role ? user.role.toLowerCase() : 'student';
+       const userRole = user ? user.role : 'student';
 
-        // Manejar visibilidad según rol en el frontend
         if (isAdmin) {
             document.getElementById('registerColumn').style.display = 'block';
             document.getElementById('inventoryColumn').className = 'col-md-8';
         } else {
             document.getElementById('registerColumn').style.display = 'none';
             document.getElementById('inventoryColumn').className = 'col-md-12';
-            // Opcional: si quieres ocultar por completo la columna de acciones para usuarios:
-            // document.getElementById('actionsHeader').style.display = 'none';
+        }
+
+        function showMessage(text, isError) {
+            const box = document.getElementById('messageBox');
+            box.innerText = text;
+            box.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
+            setTimeout(() => box.className = 'alert d-none', 3000);
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#equipmentTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
         }
 
         async function loadMetrics() {
@@ -111,22 +134,46 @@
             document.getElementById('kpiUsers').innerText = data.total_users;
         }
 
+        async function loadCategories() {
+            const res = await fetch('http://localhost:8000/api/categories');
+            const cats = await res.json();
+            const select = document.getElementById('category_id');
+            select.innerHTML = ''; 
+            cats.forEach(c => {
+                select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        }
+
         async function loadEquipment() {
             const res = await fetch('http://localhost:8000/api/equipment');
             const items = await res.json();
+            
+            const catRes = await fetch('http://localhost:8000/api/categories');
+            const catList = await catRes.json();
+
             const tbody = document.getElementById('equipmentTableBody');
             tbody.innerHTML = '';
             
             items.forEach(eq => {
                 const badgeColor = eq.status === 'AVAILABLE' ? 'bg-success' : (eq.status === 'LOANED' ? 'bg-warning' : 'bg-danger');
-                
-                // Construir botones de acción condicionales
+                const loanedByText = eq.loaned_by ? eq.loaned_by : '-';
+                const catObj = catList.find(c => c.id === eq.category_id);
+                const catName = catObj ? catObj.name : 'Sin categoría';
+
                 let actionsHtml = '';
                 if (isAdmin) {
-                    actionsHtml = `
-                        <button class="btn btn-sm btn-warning" onclick="toggleStatus(${eq.id})">Cambiar Estado</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${eq.id})">Eliminar</button>
-                    `;
+                    // If it's loaned, show "Devolver" (Return). Otherwise, show "Cambiar" and "Eliminar".
+                    if (eq.status === 'LOANED') {
+                        actionsHtml = `
+                            <button class="btn btn-sm btn-primary" onclick="returnEquipment(${eq.id})">Devolver</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${eq.id})">Eliminar</button>
+                        `;
+                    } else {
+                        actionsHtml = `
+                            <button class="btn btn-sm btn-warning" onclick="toggleStatus(${eq.id})">Cambiar</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${eq.id})">Eliminar</button>
+                        `;
+                    }
                 } else {
                     actionsHtml = `<span class="text-muted fst-italic">Solo lectura</span>`;
                 }
@@ -135,12 +182,15 @@
                     <tr>
                         <td>${eq.id}</td>
                         <td>${eq.serial_no}</td>
+                        <td>${catName}</td>
                         <td>${eq.name}</td>
                         <td><span class="badge ${badgeColor}">${eq.status}</span></td>
+                        <td><strong>${loanedByText}</strong></td>
                         <td>${actionsHtml}</td>
                     </tr>
                 `;
             });
+            filterTable(); 
         }
 
         async function toggleStatus(id) {
@@ -152,7 +202,7 @@
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-User-Role': userRole // Enviamos el rol actual para que el backend lo autorice
+                    'X-User-Role': userRole
                 },
                 body: JSON.stringify({
                     serial_no: eq.serial_no,
@@ -162,10 +212,29 @@
                 })
             });
             if (putRes.ok) {
+                showMessage('Estado cambiado correctamente.', false);
                 loadEquipment();
                 loadMetrics();
             } else {
-                alert('Error al cambiar estado');
+                showMessage('Error al cambiar estado.', true);
+            }
+        }
+
+        async function returnEquipment(id) {
+            if (!isAdmin) return;
+            if (!confirm('¿El estudiante ha devuelto este equipo?')) return;
+            
+            const res = await fetch(`http://localhost:8000/api/reservations/return/${id}`, {
+                method: 'PUT',
+                headers: { 'X-User-Role': userRole }
+            });
+            
+            if (res.ok) {
+                showMessage('Equipo devuelto y disponible.', false);
+                loadEquipment();
+                loadMetrics();
+            } else {
+                showMessage('Error al procesar la devolución.', true);
             }
         }
 
@@ -175,14 +244,15 @@
             const res = await fetch(`http://localhost:8000/api/equipment/${id}`, { 
                 method: 'DELETE',
                 headers: {
-                    'X-User-Role': userRole // Enviamos el rol para aprobar el borrado
+                    'X-User-Role': userRole 
                 }
             });
             if (res.ok) {
+                showMessage('Equipo eliminado correctamente.', false);
                 loadEquipment();
                 loadMetrics();
             } else {
-                alert('Error al eliminar');
+                showMessage('Error al eliminar.', true);
             }
         }
 
@@ -195,7 +265,7 @@
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-User-Role': userRole // Enviamos el rol para autorizar la inserción
+                        'X-User-Role': userRole
                     },
                     body: JSON.stringify({
                         serial_no: document.getElementById('serial_no').value,
@@ -204,17 +274,19 @@
                     })
                 });
                 if (res.ok) {
+                    showMessage('Equipo registrado correctamente.', false);
                     document.getElementById('equipmentForm').reset();
                     loadEquipment();
                     loadMetrics();
                 } else {
-                    alert('Error al registrar equipo');
+                    showMessage('Error al registrar equipo.', true);
                 }
             });
         }
 
         loadMetrics();
         loadEquipment();
+        loadCategories();
     </script>
 </body>
 </html>

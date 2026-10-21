@@ -24,11 +24,18 @@ def verify_admin_role(x_user_role: str = Header(default="student")):
 def list_equipment():
     conn = get_connection() # Abrimos la conexión con Oracle
     cursor = conn.cursor() # Creamos el cursor para ejecutar las consultas SQL
-    cursor.execute("SELECT EQUIPMENT_ID, SERIAL_NO, NAME, CATEGORY_ID, STATUS FROM EQUIPMENT") # Pedimos ID, serie, nombre, categoría y estado de la tabla
+    # Aquí usamos LEFT JOIN para buscar en las tablas de reservas quién tiene el equipo actualmente
+    cursor.execute("""
+        SELECT E.EQUIPMENT_ID, E.SERIAL_NO, E.NAME, E.CATEGORY_ID, E.STATUS, U.FULL_NAME AS LOANED_BY
+        FROM EQUIPMENT E
+        LEFT JOIN RESERVATION_DETAILS RD ON E.EQUIPMENT_ID = RD.EQUIPMENT_ID
+        LEFT JOIN RESERVATIONS R ON RD.RESERVATION_ID = R.RESERVATION_ID AND R.STATUS = 'APPROVED'
+        LEFT JOIN USERS U ON R.USER_ID = U.USER_ID
+    """) 
     rows = cursor.fetchall() # Guardamos todas las filas devueltas por la base de datos
     conn.close() # Cerramos la conexión para no gastar recursos
-    # Transformamos las tuplas crudas de Oracle en una lista de diccionarios limpios en formato JSON para el frontend
-    return [{"id": r[0], "serial_no": r[1], "name": r[2], "category_id": r[3], "status": r[4]} for r in rows]
+    # Transformamos las tuplas crudas de Oracle en una lista de diccionarios limpios en formato JSON para el frontend (incluyendo loaned_by)
+    return [{"id": r[0], "serial_no": r[1], "name": r[2], "category_id": r[3], "status": r[4], "loaned_by": r[5]} for r in rows]
 
 @router.get("/{equipment_id}") # Endpoint tipo GET para buscar un solo equipo específico usando su ID único en la URL
 def get_equipment(equipment_id: int):

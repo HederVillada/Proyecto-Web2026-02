@@ -21,5 +21,20 @@ VALUES (1, '3DP-001', 'Creality Ender 3', 1, 'AVAILABLE');
 INSERT INTO EQUIPMENT (EQUIPMENT_ID, SERIAL_NO, NAME, CATEGORY_ID, STATUS) 
 VALUES (2, 'VR-001', 'Meta Quest 3', 2, 'AVAILABLE');
 
+-- Nuevas categorías que añadi hoy
+INSERT INTO CATEGORIES (CATEGORY_ID, NAME, DESCRIPTION) 
+VALUES (3, 'Computers & Laptops', 'Desktop PCs and Laptops');
+
+INSERT INTO CATEGORIES (CATEGORY_ID, NAME, DESCRIPTION) 
+VALUES (4, 'Monitors & Projectors', 'Screens and display equipment');
+
+INSERT INTO CATEGORIES (CATEGORY_ID, NAME, DESCRIPTION) 
+VALUES (5, 'Peripherals', 'Keyboards, mice, and accessories');
+
+-- Corregir el serial que estaba como UNKNOWN
+UPDATE EQUIPMENT SET SERIAL_NO = '3DP-001' WHERE EQUIPMENT_ID = 1;
+
+COMMIT;
+
 COMMIT;
 
