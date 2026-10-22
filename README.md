@@ -32,7 +32,7 @@ Luego, ejecutar los scripts SQL en este orden exacto: 01_tables.sql, 02_constrai
     pip install -r requirements.txt
     python -m uvicorn main:app --reload
 
-La documentación de la API estará disponible en http://localhost:8000/docs
+La documentación de la API estará disponible en http://localhost:8080/docs
 
     Frontend:
     Abrir una segunda terminal y ejecutar:
