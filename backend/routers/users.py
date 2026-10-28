@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
 from database.connection import get_connection
+from password_utils import hash_password
 
 router = APIRouter()
 
-# Security Guard
 def verify_admin_role(x_user_role: str = Header(default="student")):
     if x_user_role.lower() != "admin":
         raise HTTPException(status_code=403, detail="Acceso denegado: Solo administradores.")
@@ -12,7 +12,7 @@ def verify_admin_role(x_user_role: str = Header(default="student")):
 class UserInput(BaseModel):
     full_name: str
     email: str
-    password_hash: str
+    password: str # El frontend manda "password"
     role_id: int
 
 @router.post("", status_code=201, dependencies=[Depends(verify_admin_role)])
@@ -20,12 +20,13 @@ def create_user(data: UserInput):
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        hashed_pwd = hash_password(data.password) # Hasheamos aquí
         cursor.execute(
             """
             INSERT INTO USERS (USER_ID, FULL_NAME, EMAIL, PASSWORD_HASH, ROLE_ID) 
             VALUES (USERS_SEQ.NEXTVAL, :name, :email, :pwd, :role)
             """,
-            {"name": data.full_name, "email": data.email, "pwd": data.password_hash, "role": data.role_id}
+            {"name": data.full_name, "email": data.email, "pwd": hashed_pwd, "role": data.role_id}
         )
         conn.commit()
     except Exception as e:
@@ -48,12 +49,13 @@ def update_user(user_id: int, data: UserInput):
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        hashed_pwd = hash_password(data.password) # Hasheamos aquí también
         cursor.execute(
             """
             UPDATE USERS SET FULL_NAME = :name, EMAIL = :email, PASSWORD_HASH = :pwd, ROLE_ID = :role 
             WHERE USER_ID = :id
             """,
-            {"name": data.full_name, "email": data.email, "pwd": data.password_hash, "role": data.role_id, "id": user_id}
+            {"name": data.full_name, "email": data.email, "pwd": hashed_pwd, "role": data.role_id, "id": user_id}
         )
         if cursor.rowcount == 0:
             conn.close()
@@ -72,6 +74,12 @@ def delete_user(user_id: int):
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        # Borrado en cascada manual para evitar el ORA-02292
+        cursor.execute("""
+            DELETE FROM RESERVATION_DETAILS 
+            WHERE RESERVATION_ID IN (SELECT RESERVATION_ID FROM RESERVATIONS WHERE USER_ID = :id)
+        """, {"id": user_id})
+        cursor.execute("DELETE FROM RESERVATIONS WHERE USER_ID = :id", {"id": user_id})
         cursor.execute("DELETE FROM USERS WHERE USER_ID = :id", {"id": user_id})
         if cursor.rowcount == 0:
             conn.close()

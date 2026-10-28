@@ -42,8 +42,8 @@
                             <input type="email" id="email" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Contraseña (Hash)</label>
-                            <input type="text" id="password_hash" class="form-control" required placeholder="Pega el hash aquí">
+                            <label class="form-label">Contraseña</label>
+                            <input type="text" id="password" class="form-control" required placeholder="Ej: admin123">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Rol</label>
@@ -79,6 +79,7 @@
         </div>
     </div>
 
+    <!-- Modal para Editar Usuario -->
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -96,6 +97,10 @@
                         <label class="form-label">Email</label>
                         <input type="email" id="edit_email" class="form-control" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Contraseña</label>
+                        <input type="text" id="edit_password" class="form-control" placeholder="Ej: admin123" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -105,6 +110,7 @@
         </div>
     </div>
 
+    <!-- Bootstrap JS for the Modal -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -123,7 +129,7 @@
             const box = document.getElementById('messageBox');
             box.innerText = text;
             box.className = `alert ${isError ? 'alert-danger' : 'alert-success'}`;
-            setTimeout(() => box.className = 'alert d-none', 3000);
+            setTimeout(() => box.className = 'alert d-none', 4000);
         }
 
         async function loadUsers() {
@@ -163,6 +169,7 @@
             document.getElementById('edit_user_id').value = userToEdit.id;
             document.getElementById('edit_full_name').value = userToEdit.name;
             document.getElementById('edit_email').value = userToEdit.email;
+            document.getElementById('edit_password').value = ''; // Clear it
             
             const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
             modal.show();
@@ -172,6 +179,7 @@
             const id = document.getElementById('edit_user_id').value;
             const newName = document.getElementById('edit_full_name').value;
             const newEmail = document.getElementById('edit_email').value;
+            const newPassword = document.getElementById('edit_password').value;
             
             const userToEdit = globalUsers.find(u => u.id === parseInt(id));
             
@@ -184,7 +192,7 @@
                 body: JSON.stringify({
                     full_name: newName,
                     email: newEmail,
-                    password_hash: "$2b$12$eImiTXuWVxfM37uY4JANjOL.81F8RzW/vT.1o3S6T.a9d5xJq5L4G",
+                    password: newPassword,
                     role_id: userToEdit.role_id
                 })
             });
@@ -194,12 +202,13 @@
                 bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
                 loadUsers();
             } else {
-                showMessage('Error al actualizar usuario.', true);
+                const errData = await res.json();
+                showMessage('Error: ' + errData.detail, true);
             }
         }
 
         async function deleteUser(id) {
-            if (!confirm('¿Estás seguro de eliminar a este usuario?')) return;
+            if (!confirm('¿Estás seguro de eliminar a este usuario y todo su historial?')) return;
             const res = await fetch(`http://localhost:8080/api/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'X-User-Role': user.role }
@@ -208,7 +217,8 @@
                 showMessage('Usuario eliminado correctamente.', false);
                 loadUsers();
             } else {
-                showMessage('Error al eliminar usuario.', true);
+                const errData = await res.json();
+                showMessage('Error: ' + errData.detail, true);
             }
         }
 
@@ -223,7 +233,7 @@
                 body: JSON.stringify({
                     full_name: document.getElementById('full_name').value,
                     email: document.getElementById('email').value,
-                    password_hash: document.getElementById('password_hash').value,
+                    password: document.getElementById('password').value,
                     role_id: parseInt(document.getElementById('role_id').value)
                 })
             });
@@ -232,7 +242,8 @@
                 document.getElementById('userForm').reset();
                 loadUsers();
             } else {
-                showMessage('Error al crear usuario (puede que el email ya exista).', true);
+                const errData = await res.json();
+                showMessage('Error: ' + errData.detail, true);
             }
         });
 
