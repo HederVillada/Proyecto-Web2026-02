@@ -24,13 +24,16 @@ def verify_admin_role(x_user_role: str = Header(default="student")):
 def list_equipment():
     conn = get_connection() # Abrimos la conexión con Oracle
     cursor = conn.cursor() # Creamos el cursor para ejecutar las consultas SQL
-    # Aquí usamos LEFT JOIN para buscar en las tablas de reservas quién tiene el equipo actualmente
+    # FIX: Usamos una subconsulta (SELECT dentro de SELECT) en lugar de LEFT JOIN para evitar que el equipo se duplique si tiene múltiples préstamos en el historial.
     cursor.execute("""
-        SELECT E.EQUIPMENT_ID, E.SERIAL_NO, E.NAME, E.CATEGORY_ID, E.STATUS, U.FULL_NAME AS LOANED_BY
+        SELECT E.EQUIPMENT_ID, E.SERIAL_NO, E.NAME, E.CATEGORY_ID, E.STATUS, 
+               (SELECT U.FULL_NAME 
+                FROM RESERVATIONS R
+                JOIN RESERVATION_DETAILS RD ON R.RESERVATION_ID = RD.RESERVATION_ID
+                JOIN USERS U ON R.USER_ID = U.USER_ID
+                WHERE RD.EQUIPMENT_ID = E.EQUIPMENT_ID AND R.STATUS = 'APPROVED'
+                FETCH FIRST 1 ROWS ONLY) AS LOANED_BY
         FROM EQUIPMENT E
-        LEFT JOIN RESERVATION_DETAILS RD ON E.EQUIPMENT_ID = RD.EQUIPMENT_ID
-        LEFT JOIN RESERVATIONS R ON RD.RESERVATION_ID = R.RESERVATION_ID AND R.STATUS = 'APPROVED'
-        LEFT JOIN USERS U ON R.USER_ID = U.USER_ID
     """) 
     rows = cursor.fetchall() # Guardamos todas las filas devueltas por la base de datos
     conn.close() # Cerramos la conexión para no gastar recursos
